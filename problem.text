@@ -1,0 +1,122 @@
+router.post('/delete_user',async(req,res)=>{
+
+      const { userid } = req.body;
+
+      try{
+           var user_find = await UserFound();
+           var user_delete = await userDelete();
+           var delete_userGallery = await DeleteUserGallery();
+           var delete_report = await DeleteReport();
+           var delete_post = await DeletePost();
+           var delete_like = await DeleteLike();
+           var delete_group = await DeleteGroup();
+           var delete_groupmember = await DeleteGroupMember();
+           var delete_comment = await DeleteComment();
+           var delete_friend = await DeleteFriend();
+           var delete_notification = await DeleteNotification();
+
+
+      user_find.then((result)=> {
+
+          var CREDENTIALS = {
+                   appId: 72588,
+                   authKey: '4YhnWmEeWB3FE98',
+                   authSecret: '3dcPKjj2QRZBNPu'
+                 };
+
+                var params = { login: `${result.username}` , password: '12345678' }
+
+               QB.init(CREDENTIALS.appId, CREDENTIALS.authKey, CREDENTIALS.authSecret);
+
+               QB.createSession(params, (err,session)=>{
+
+               	if(session){
+
+            var headers = {
+                'QuickBlox-REST-API-Version': '0.1.0',
+                'QB-Token': session.token
+            };
+
+            var options = {
+                url: `https://api.quickblox.com/users/${result.quickblox_id}.json`,
+                method: 'DELETE',
+                headers: headers
+            };
+
+
+     function callback(error, response, body) {
+
+                if (!error && response.statusCode == 200) {
+
+                    console.log('user deleted');
+
+                    // res.json({ status: true, msg: "user deleted successfully", body: body})
+                } else {
+                    console.log(err);
+                   
+                    // res.json({ status: false, msg: "action failed",error: error})
+                }
+            }
+            request(options, callback);
+
+               	}else{
+               		console.log(err)
+               	}
+
+               })
+
+      })
+         res.json({ status: true, msg: "user deleted successfully"})
+
+      }
+      catch(e){
+    
+        res.json({status:false,msg:"user not deleted",error:e})
+      }
+
+function UserFound(){
+	return User.findById({'_id':userid}).exec();
+}
+
+function userDelete(){
+
+	return User.findByIdAndRemove({'_id':user}).exec();
+}
+
+function DeleteUserGallery(){
+	return UserGallery.remove({'user_id':userid}).exec();
+}
+
+function DeleteReport(){
+	return Report.remove({'report_user_id':userid}).exec();
+}
+
+function DeletePost(){
+	return Post.remove({'user_id':userid}).exec();
+}
+
+function DeleteLike(){
+	return Like.remove({'user_id':userid}).exec();
+}
+
+function DeleteGroup(){
+	return Group.remove({'admin_id':userid}).exec();
+}
+function DeleteGroupMember(){
+	return GroupMember.remove({'user_id':userid}).exec();
+}
+
+function DeleteComment(){
+	return Comment.remove({'user_id':userid}).exec();
+}
+
+function DeleteFriend(){
+	return Friend.remove({$and:[{'send_from_user_id':userid},{'send_to_user_id':userid}]}).exec();
+
+}
+
+function DeleteNotification(){
+	return Notification.remove({$and:[{'user_id':userid},{'user_onwer_id':userid}]}).exec();
+}
+
+})
